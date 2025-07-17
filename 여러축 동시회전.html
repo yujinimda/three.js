@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>여러축 동시회전</title>
+    <style>
+      body {
+        margin: 0;
+        background: #001122;
+      }
+      #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 15px;
+        border-radius: 8px;
+      }
+      #controls {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        color: white;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 15px;
+        border-radius: 8px;
+      }
+      button {
+        background: #0066cc;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button.active {
+        background: #00cc66;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info">
+      <p><strong>X축:</strong> <span id="xSpeed">0</span> (앞뒤 굴리기)</p>
+      <p><strong>Y축:</strong> <span id="ySpeed">0</span> (좌우 돌리기)</p>
+      <p><strong>Z축:</strong> <span id="zSpeed">0</span> (시계 회전)</p>
+    </div>
+
+    <div id="controls">
+      <button onclick="setRotation(0.02, 0.02, 0)">X+Y 동시</button>
+      <button onclick="setRotation(0.02, 0.02, 0.02)">모든 축 동시</button>
+      <button onclick="setRotation(0.01, 0.02, 0.03)">다른 속도</button>
+      <button onclick="setRotation(0, 0, 0)">정지</button>
+    </div>
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    //기본세팅
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x444444);
+    document.body.appendChild(renderer.domElement);
+
+    const cube = new THREE.Mesh(
+      new THREE.BoxGeometry(3, 2, 1),
+      new THREE.MeshBasicMaterial({ color: 0xff4444 })
+    );
+    scene.add(cube);
+
+    // 3. 카메라 위치
+    camera.position.z = 8;
+
+    // 4. 회전 속도 변수들
+    let xSpeed = 0;
+    let ySpeed = 0;
+    let zSpeed = 0;
+
+    // 5. 회전 속도 설정 함수
+    function setRotation(x, y, z) {
+      xSpeed = x;
+      ySpeed = y;
+      zSpeed = z;
+
+      // 화면에 표시
+      document.getElementById("xSpeed").textContent = x.toFixed(3);
+      document.getElementById("ySpeed").textContent = y.toFixed(3);
+      document.getElementById("zSpeed").textContent = z.toFixed(3);
+    }
+
+    // 6. 애니메이션 함수
+    function animate() {
+      requestAnimationFrame(animate);
+
+      //여러 축 동시 회전 위에 컨트롤에서 값 전달
+      cube.rotation.x += xSpeed; // X축 회전
+      cube.rotation.y += ySpeed; // Y축 회전 (동시에)
+      cube.rotation.z += zSpeed; // Z축 회전 (동시에)
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // 8. 화면 크기 변경 대응
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</html>
