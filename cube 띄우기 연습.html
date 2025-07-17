@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>큐브 띄우기</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+      }
+
+      #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info">
+      <h3>1단계: 기본 씬 만들기</h3>
+      <p>• 씬(Scence) 생성</p>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // 1. 씬 생성 - 3D 공간을 담는 컨테이너
+      const 씬 = new THREE.Scene();
+
+      // 2. 카메라 생성 - 화면ㅇ에 보여질 시점 설정
+      // PerspectiveCamera(시야각, 종횡비, 가까운면, 먼면)
+      // 원근감이 있는 카메라로, 실제 사람의 눈이나 카메라 렌즈처럼 멀리 있는 물체는 작게, 가까이 있는 물체는 크게 보이게 합니다.
+      // 시야각 : 카메라가 볼 수 있는 수직 시야각, 값이 클수록 -> 더 넓은 범위를 봄(광각) / 값이 작을수록 -> 좁은 범위를 봄(망원), 일반적인 값은 45-75
+      // 종횡비 : 화면의 가로:세로 비율, 보통은 브라우저 창 크기에 맞춤
+      // 가까운 클리핑 면(Near Clipping Plane) : 카메라가 렌더링을 시작하는 최소 거리, 이보다 가까운 물체는 보이지 않음
+      // 먼 클리핑 면(Far Clipping Plane) : 카메라가 렌더링하는 최대 거리, 이보다 먼 물체는 보이지 않음, 너무 크면 성능 저하
+      const 카메라 = new THREE.PerspectiveCamera(
+        75, // 시야각(FOV)
+        window.innerWidth / window.innerHeight, // 종횡비
+        0.1, // 가까운 클리핑 면
+        1000 // 먼 클리핑 면
+      );
+
+      // 3. 렌더링 생성 - 실제로 화면에 그려주는 역할
+      const renderer = new THREE.WebGLRenderer({ antialias: true }); // 계단현상 방지 (안티앨리어싱), three.js에서 여기서 rederer에 convas를 자동생성
+      renderer.setSize(window.innerWidth, window.innerHeight); // 그려지는 전체 사이즈 설정
+      renderer.setClearColor(0x000000); // 0x 접두사 - 자바스크립트 16진수 표기법, 배경색 설정
+      document.body.appendChild(renderer.domElement);
+
+      // 4. 큐브 생성
+      // 4-1. 기하학적 형태 정의 (수학적으로 정의된 3D 모양)
+      const 정육면체형태 = new THREE.BoxGeometry(2, 2, 2);
+      const 둥근공형태 = new THREE.SphereGeometry(1, 32, 32);
+      const 원통형태 = new THREE.CylinderGeometry(1, 1, 2);
+
+      // 4-2. 재질 정의 (색상과 표면 특성)
+      const 재질 = new THREE.MeshBasicMaterial({
+        color: 0x00ff88, // 초록색
+        wireframe: false, // 와이어 프레임 모드 off (면 채우기 모드)
+      });
+
+      const 재질2 = new THREE.MeshBasicMaterial({
+        color: 0x0000ff, // 파란색
+        wireframe: false, // 와이어 프레임 모드 off (면 채우기 모드)
+      });
+
+      const 재질3 = new THREE.MeshBasicMaterial({
+        color: 0xffff00, // 노란색
+        wireframe: true, // 와이어 프레임 모드 off (면 채우기 모드)
+      });
+
+      // 4-3. 메쉬 생성 (기하학적 형태 + 재질)
+      const 정육면체 = new THREE.Mesh(정육면체형태, 재질);
+      const 둥근공 = new THREE.Mesh(둥근공형태, 재질2);
+      const 원통 = new THREE.Mesh(원통형태, 재질3);
+
+      // 5. 씬에 큐브 추가
+      씬.add(정육면체, 둥근공, 원통);
+
+      // 5-1. 큐브 위치 변경
+      정육면체.position.x = -3;
+      둥근공.position.x = 0;
+      원통.position.x = 3;
+
+      // 6. 카메라 위치 설정 (x, y, z)
+      //카메라.position.x = 30;
+      카메라.position.z = 5; // zcnrdmfh 5만큼 뒤로 이동
+
+      // 7. 렌더링함수 : 실제로 화면에 그리기
+
+      function 렌더() {
+        // 렌더러로 씬을 카메라 시점에서 렌더링
+        renderer.render(씬, 카메라);
+      }
+
+      // 8. 화면 크기 변경 대응
+      function 화면크기_변경될때_실행되는_함수() {
+        카메라.aspect = window.innerWidth / window.innerHeight; // aspect : 카메라의 종횡비, 창이 바뀌면 비율도 다시 계산해야 한다.
+        카메라.updateProjectionMatrix(); // aspect가 바뀌면 반드시 호출, 안하면 화면이 찌그러짐
+        renderer.setSize(window.innerWidth, window.innerHeight); // Canvas 크기를 새로운 창 크기로 조정
+        렌더();
+      }
+
+      window.addEventListener("resize", 화면크기_변경될때_실행되는_함수);
+
+      // 9. 초기 렌더링
+      렌더();
+
+      console.log("씬 생성 완료!");
+    </script>
+  </body>
+</html>

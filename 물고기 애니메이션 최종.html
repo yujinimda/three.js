@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐟 S자 헤엄치며 떨어지는 큐브</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(to bottom, #001122, #003366);
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+      }
+
+      #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #00ffff;
+      }
+
+      #controls {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        color: white;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        border-radius: 8px;
+      }
+
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info">
+      <h3>S자 헤엄치며 떨어지는 큐브</h3>
+      <p><strong>휠 내리기:</strong> S자로 헤엄치며 아래로</p>
+      <p><strong>휠 올리기:</strong> S자로 헤엄치며 위로</p>
+      <p><strong>자동:</strong> 물고기처럼 흔들흔들</p>
+    </div>
+
+    <div id="controls">
+      <p>Y위치: <span id="yPos">0</span></p>
+      <p>X위치: <span id="xPos">0</span></p>
+      <p>헤엄속도: <span id="swimSpeed">보통</span></p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // === 씬 기본 설정 ===
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x001133);
+      document.body.appendChild(renderer.domElement);
+
+      // === 물고기 큐브 생성 ===
+      const geometry = new THREE.BoxGeometry(1.5, 1, 2);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x00ff88,
+        wireframe: false,
+      });
+      const fishCube = new THREE.Mesh(geometry, material);
+      scene.add(fishCube);
+
+      // === 애니메이션 변수들 ===
+      let time = 0;
+      let targetY = 0;
+      let currentY = 0;
+      let isScrolling = false;
+      let scrollSpeed = 0;
+      let sWaveOffset = 0; // S자 움직임을 위한 오프셋
+
+      // === 휠 이벤트 ===
+      document.addEventListener("wheel", (event) => {
+        // 휠 방향에 따라 위아래 이동 (더 천천히)
+        targetY -= event.deltaY * 0.008;
+        scrollSpeed = Math.abs(event.deltaY * 0.0005);
+        isScrolling = true;
+
+        // S자 움직임을 위한 오프셋 증가 (더 천천히)
+        sWaveOffset += Math.abs(event.deltaY) * 0.0003;
+
+        setTimeout(() => {
+          isScrolling = false;
+          scrollSpeed *= 0.5;
+        }, 500);
+      });
+
+      // === 카메라 설정 ===
+      camera.position.z = 8;
+
+      // === 메인 애니메이션 함수 ===
+      function animate() {
+        requestAnimationFrame(animate);
+        time += 0.016; // 대략 60fps
+
+        // 🐟 물고기 기본 헤엄치기 패턴 (항상 흔들흔들)
+        const baseSwimIntensity = 1;
+        const scrollSwimIntensity = isScrolling ? 1.5 + scrollSpeed * 8 : 1; // 덜 격렬하게
+
+        // 기본 좌우 꼬물거림 (꼬리 흔들기)
+        const baseRotation = Math.sin(time * 3) * 0.2;
+        fishCube.rotation.y = baseRotation * baseSwimIntensity;
+
+        // 기본 상하 미세한 파동
+        const baseVerticalWave = Math.sin(time * 4) * 0.02;
+
+        // S자 헤엄치며 이동하기
+        if (isScrolling || Math.abs(targetY - currentY) > 0.05) {
+          // Y축 이동 (더 부드럽게)
+          currentY += (targetY - currentY) * 0.04;
+          fishCube.position.y = currentY + baseVerticalWave;
+
+          // S자 패턴 만들기 (-2 ~ 2 범위)
+          const yMovement = currentY * 0.4; // Y 이동량 (더 천천히)
+          const sWave = Math.sin(yMovement + sWaveOffset * 3) * 2.0; // -2~2 범위
+          fishCube.position.x = sWave;
+
+          // 이동할 때 헤엄치기 (더 자연스럽게)
+          fishCube.rotation.y =
+            baseRotation * scrollSwimIntensity +
+            Math.sin(yMovement + sWaveOffset * 3) * 0.2;
+
+          // 앞뒤 추진력 (더 부드럽게)
+          fishCube.position.z = Math.sin(time * 4) * 0.05 * scrollSwimIntensity;
+        } else {
+          // 정지 상태에서는 현재 X위치에서 멈춤 (중앙 복귀 안함)
+          fishCube.position.y += baseVerticalWave;
+          // fishCube.position.x는 그대로 유지 (마지막 S자 위치에서 멈춤)
+          fishCube.position.z += (0 - fishCube.position.z) * 0.02; // z만 원래 위치로
+        }
+
+        // 정보 업데이트
+        document.getElementById("yPos").textContent =
+          fishCube.position.y.toFixed(2);
+        document.getElementById("xPos").textContent =
+          fishCube.position.x.toFixed(2);
+        document.getElementById("swimSpeed").textContent = isScrolling
+          ? "빠름!"
+          : "보통";
+
+        // 렌더링
+        renderer.render(scene, camera);
+      }
+
+      // === 리사이즈 대응 ===
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // === 시작! ===
+      animate();
+      console.log("S자 헤엄치는 큐브 시작!");
+    </script>
+  </body>
+</html>

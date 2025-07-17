@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>애니메이션 루프 기초</title>
+    <style>
+      body {
+        margin: 0;
+        background: #001122;
+        font-family: Arial;
+      }
+      #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info">
+      <h3>requestAnimationFrame</h3>
+      <p>프레임: <span id="frame">0</span></p>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // 1. 기본 3D 환경 설정
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x001133);
+      document.body.appendChild(renderer.domElement);
+
+      // 2. cube 생성
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshBasicMaterial({ color: 0x00ff88 })
+      );
+      scene.add(cube);
+      camera.position.z = 3;
+
+      //renderer.render(scene, camera);
+
+      // 3. 프레임 카운터
+      let frameCount = 0;
+
+      // 4. 애니메이션 함수
+      function animate() {
+        // 다음 프레임 예약(재귀 호출)
+        requestAnimationFrame(animate);
+
+        // 프레임 카운터 증가
+        frameCount++;
+        document.getElementById("frame").textContent = frameCount;
+
+        // 화면에 그리기
+        renderer.render(scene, camera);
+      }
+
+      // 애니메이션 시작
+      animate();
+    </script>
+  </body>
+</html>
