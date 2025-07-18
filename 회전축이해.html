@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회전축 이해하기</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 10px 50px;
+        border-radius: 10px;
+        background-color: #eee;
+        border: 1px solid #000;
+      }
+
+      #controls {
+        position: absolute;
+        top: 165px;
+        left: 10px;
+        padding: 10px 50px;
+        border-radius: 10px;
+        background-color: #eee;
+        border: 1px solid #000;
+      }
+
+      button.active {
+        background: #00cc66;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info">
+      <p>x축: <span id="xRotation">0</span></p>
+      <p>y축: <span id="yRotation">0</span></p>
+      <p>z축: <span id="zRotation">0</span></p>
+    </div>
+    <div id="controls">
+      <button id="xBtn">x축 회전</button>
+      <button id="yBtn">y축 회전</button>
+      <button id="zBtn">z축 회전</button>
+      <button id="stopBtn">회전 정지</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      //기본 3d 세팅
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75, //시야각
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x001133);
+      document.body.appendChild(renderer.domElement);
+
+      //직육면체 생성
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 1, 0.5),
+        new THREE.MeshBasicMaterial({ color: 0x00ff88 })
+      );
+
+      scene.add(cube);
+      camera.position.z = 5;
+
+      // 회전모드 변수
+      let rotationMode = "none";
+
+      // 애니메이션 함수
+      function animate() {
+        requestAnimationFrame(animate); //requestAnimationFrame 1번 호출 = 화면의 1프레임
+
+        // 선택된 축으로 회전
+        if (rotationMode === "x") {
+          cube.rotation.x += 0.02;
+        } else if (rotationMode === "y") {
+          cube.rotation.y += 0.02;
+        } else if (rotationMode === "z") {
+          cube.rotation.z += 0.02;
+        }
+
+        // 각도를 도(degree)로 변환해서 표시
+        const xDegree = ((cube.rotation.x * 180) / Math.PI) % 360;
+        const yDegree = ((cube.rotation.y * 180) / Math.PI) % 360;
+        const zDegree = ((cube.rotation.z * 180) / Math.PI) % 360;
+
+        document.getElementById("xRotation").textContent = Math.round(xDegree);
+        document.getElementById("yRotation").textContent = Math.round(yDegree);
+        document.getElementById("zRotation").textContent = Math.round(zDegree);
+
+        renderer.render(scene, camera);
+      }
+
+      // 버튼이벤트
+      document.getElementById("xBtn").addEventListener("click", () => {
+        rotationMode = "x";
+        updateButtons();
+      });
+      document.getElementById("yBtn").addEventListener("click", () => {
+        rotationMode = "y";
+        updateButtons();
+      });
+      document.getElementById("zBtn").addEventListener("click", () => {
+        rotationMode = "z";
+        updateButtons();
+      });
+      document.getElementById("stopBtn").addEventListener("click", () => {
+        rotationMode = "none";
+        updateButtons();
+      });
+
+      //활성화 이벤트
+      function updateButtons() {
+        document
+          .querySelectorAll("button")
+          .forEach((btn) => btn.classList.remove("active"));
+        if (rotationMode === "x")
+          document.getElementById("xBtn").classList.add("active");
+        else if (rotationMode === "y")
+          document.getElementById("yBtn").classList.add("active");
+        else if (rotationMode === "z")
+          document.getElementById("zBtn").classList.add("active");
+      }
+
+      animate();
+    </script>
+  </body>
+</html>
